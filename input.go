@@ -2,20 +2,21 @@ package main
 
 import (
 	"bufio"
+	"github.com/imuli/newline/term"
 	"os"
 )
 
 var Line []rune = make([]rune, 0, 256)
-var reader = bufio.NewReader(os.Stdin)
+var reader = term.NewTermReader(bufio.NewReader(os.Stdin))
 
 func CopyLine() error {
-	for loop := true;loop; {
-		r, _, err := reader.ReadRune()
+	for loop := true; loop; {
+		r, err := reader.ReadTermRune()
 		if err != nil {
 			return err
 		}
 		Line = append(Line, r)
-		if r == '\n' {
+		if r == term.Control {
 			FlushLine()
 			loop = false
 		}
