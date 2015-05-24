@@ -6,13 +6,23 @@ import (
 )
 
 const (
-	Up      = 'U'
-	Down    = 'D'
-	Right   = 'R'
-	Left    = 'L'
-	Meta    = 'M'
-	Control = 'C'
-	Shift   = 'S'
+	Normal = 0xd800 // surrogates are not valid UTF-8 so are safe for internal use
+	Control
+	Meta
+	Shift
+	Up
+	Down
+	Left
+	Right
+	Prior
+	Next
+	Home
+	End
+	Find
+	Select
+	Insert
+	Delete
+	Function
 )
 
 type TermReader struct {
@@ -48,6 +58,10 @@ func (t *TermReader) UnreadRune() error {
 	return t.r.UnreadRune()
 }
 
+func (t *TermReader) push(it ...rune) {
+	t.q = append(t.q, it...)
+}
+
 func (t *TermReader) pushRunes() error {
 	r, _, err := t.ReadRune()
 	if err != nil {
@@ -57,10 +71,10 @@ func (t *TermReader) pushRunes() error {
 		return t.readEscape()
 	}
 	if r < ' ' {
-		t.q = append(t.q, Control)
+		t.push(Control)
 		r |= '`'
 	}
-	t.q = append(t.q, r)
+	t.push(r)
 	return nil
 }
 
@@ -73,12 +87,10 @@ func (t *TermReader) readEscape() error {
 	case '[':
 		return t.readCSI()
 	case 'O':
-		//		return readESCO(b)
-	case 'o':
-		//		return readESCo(b)
+		return t.readEscO()
 	}
 	t.UnreadRune()
-	t.q = append(t.q, Meta)
+	t.push(Meta)
 	return nil
 }
 
@@ -90,27 +102,74 @@ func (t *TermReader) readPS() (n int, r rune, err error) {
 	return
 }
 
-func (t *TermReader) readCSI() (err error) {
-	_, r, err := t.readPS()
+func (t *TermReader) readCSI() error {
+	n, r, err := t.readPS()
 	switch r {
 	case 'A':
-		t.q = append(t.q, Up)
+		t.push(Up)
 	case 'B':
-		t.q = append(t.q, Down)
+		t.push(Down)
 	case 'C':
-		t.q = append(t.q, Right)
+		t.push(Right)
 	case 'D':
-		t.q = append(t.q, Left)
+		t.push(Left)
 	case 'a':
-		t.q = append(t.q, Shift, Up)
+		t.push(Shift, Up)
 	case 'b':
-		t.q = append(t.q, Shift, Down)
+		t.push(Shift, Down)
 	case 'c':
-		t.q = append(t.q, Shift, Right)
+		t.push(Shift, Right)
 	case 'd':
-		t.q = append(t.q, Shift, Left)
+		t.push(Shift, Left)
 	case 'Z':
-		t.q = append(t.q, Shift, Control, 'i')
+		t.push(Shift, Control, 'i')
+	case '@':
+		t.push(Control, Shift, fKey(n))
+	case '^':
+		t.push(Control, fKey(n))
+	case '$':
+		t.push(Shift, fKey(n))
+	case '~':
+		t.push(fKey(n))
 	}
-	return
+	return err
+}
+
+func (t *TermReader) readEscO() error {
+	r, _, err := t.ReadRune()
+	switch r {
+	case 'a':
+		t.push(Control, Up)
+	case 'b':
+		t.push(Control, Down)
+	case 'c':
+		t.push(Control, Right)
+	case 'd':
+		t.push(Control, Left)
+	case 'A':
+		t.push(Control, Shift, Up)
+	case 'B':
+		t.push(Control, Shift, Down)
+	case 'C':
+		t.push(Control, Shift, Right)
+	case 'D':
+		t.push(Control, Shift, Left)
+	}
+	return err
+}
+
+var fkeys = [...]rune{
+	Normal, Find, Insert, Delete, Select, Prior, Next, Home, End, Normal, Normal,
+	Normal, Function + 1, Function + 2, Function + 3, Function + 4, Function + 5,
+	Normal, Function + 6, Function + 7, Function + 8, Function + 9, Function + 10,
+	Normal, Function + 11, Function + 12, Function + 13, Function + 14,
+	Normal, Function + 15, Function + 16,
+	Normal, Function + 17, Function + 18, Function + 19, Function + 20,
+}
+
+func fKey(n int) rune {
+	if n < len(fkeys) {
+		return fkeys[n]
+	}
+	return Normal
 }
