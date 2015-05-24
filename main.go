@@ -2,8 +2,8 @@ package main
 
 import (
 	"flag"
-	"syscall"
 	"github.com/imuli/newline/term"
+	"syscall"
 )
 
 var termState term.State

@@ -12,7 +12,7 @@ var cursor int
 var terminal = bufio.NewWriter(os.Stderr)
 var output = bufio.NewWriter(os.Stdout)
 
-func Render(writer *bufio.Writer){
+func Render(writer *bufio.Writer) {
 	for i := range Line {
 		writer.WriteRune(Line[i])
 	}
