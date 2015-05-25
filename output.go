@@ -17,12 +17,14 @@ func Render(writer *bufio.Writer, text []rune) {
 	}
 }
 
+var cursor int
+
 func (l *Line) Redraw() {
-	term.CursorShift(terminal, -l.cursor)
+	term.CursorShift(terminal, -cursor)
 	Render(terminal, l.buffer)
 	term.EraseLine(terminal)
 	term.CursorShift(terminal, -term.DisplayWidth(l.buffer[l.offset:]))
-	l.cursor = term.DisplayWidth(l.buffer[:l.offset])
+	cursor = term.DisplayWidth(l.buffer[:l.offset])
 	terminal.Flush()
 }
 

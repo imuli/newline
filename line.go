@@ -5,7 +5,6 @@ import ()
 type Line struct {
 	buffer []rune
 	offset int
-	cursor int
 }
 
 func NewLine() *Line {
