@@ -2,6 +2,7 @@ package term
 
 import (
 	"fmt"
+	runewidth "github.com/mattn/go-runewidth"
 	"io"
 )
 
@@ -21,3 +22,9 @@ func EraseLine(writer io.Writer) {
 	fmt.Fprint(writer, "\x1b[K")
 }
 
+func DisplayWidth(text []rune) (sum int){
+	for _, r := range text {
+		sum += runewidth.RuneWidth(r)
+	}
+	return
+}

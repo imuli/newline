@@ -8,27 +8,27 @@ import (
 )
 
 var ptyMode = flag.Bool("pty", false, "enable pty mode")
-var cursor int
 var terminal = bufio.NewWriter(os.Stderr)
 var output = bufio.NewWriter(os.Stdout)
 
-func Render(writer *bufio.Writer) {
-	for i := range Line {
-		writer.WriteRune(Line[i])
+func Render(writer *bufio.Writer, text []rune) {
+	for i := range text {
+		writer.WriteRune(text[i])
 	}
 }
 
-func RedrawLine() {
-	term.CursorShift(terminal, -cursor)
-	Render(terminal)
-	cursor = len(Line)
+func (l *Line) Redraw() {
+	term.CursorShift(terminal, -l.cursor)
+	Render(terminal, l.buffer)
 	term.EraseLine(terminal)
+	term.CursorShift(terminal, -term.DisplayWidth(l.buffer[l.offset:]))
+	l.cursor = term.DisplayWidth(l.buffer[:l.offset])
 	terminal.Flush()
 }
 
-func FlushLine() {
-	Render(output)
-	Line = Line[0:0]
+func (l *Line) Flush() {
+	Render(output, l.buffer)
+	l.Clear()
 }
 
 func OutputFlush() {

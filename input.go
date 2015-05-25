@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var Line []rune = make([]rune, 0, 256)
+var line *Line = NewLine()
 var reader = term.NewTermReader(bufio.NewReader(os.Stdin))
 
 func CopyLine() error {
@@ -15,12 +15,12 @@ func CopyLine() error {
 		if err != nil {
 			return err
 		}
-		Line = append(Line, r)
+		line.Insert([]rune{r})
 		if r == term.Control {
-			FlushLine()
+			line.Flush()
 			loop = false
 		}
-		RedrawLine()
+		line.Redraw()
 		OutputFlush()
 	}
 	return nil
