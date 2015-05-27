@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	Normal = 0xd800 // surrogates are not valid UTF-8 so are safe for internal use
+	Backspace = 0x7f
+	Normal = 0xd800 + iota // surrogates are not valid UTF-8 so are safe for internal use
 	Control
 	Meta
 	Shift

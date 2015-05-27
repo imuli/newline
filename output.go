@@ -11,6 +11,12 @@ var ptyMode = flag.Bool("pty", false, "enable pty mode")
 var terminal = bufio.NewWriter(os.Stderr)
 var output = bufio.NewWriter(os.Stdout)
 
+const (
+	Newline           = 0x0a
+	Interrupt         = 0x03
+	EndOfTransmission = 0x04
+)
+
 func Render(writer *bufio.Writer, text []rune) {
 	for i := range text {
 		writer.WriteRune(text[i])
@@ -28,9 +34,17 @@ func (l *Line) Redraw() {
 	terminal.Flush()
 }
 
-func (l *Line) Flush() {
+func (l *Line) Flush(r rune) bool {
 	Render(output, l.buffer)
+	cont := true
+	switch {
+	case *ptyMode, r == Newline:
+		output.WriteRune(r)
+	case r == Interrupt, r == EndOfTransmission && len(l.buffer) == 0:
+		cont = false
+	}
 	l.Clear()
+	return cont
 }
 
 func OutputFlush() {

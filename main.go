@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"github.com/imuli/newline/term"
+	"strconv"
 	"syscall"
 )
 
 var termState term.State
-var lines = 1.0
 
 func main() {
+	var lines float64 = 1.0
 	if termState, err := term.GetState(0); err == nil {
 		tempState := *termState
 		tempState.MakeRaw()
@@ -18,11 +19,15 @@ func main() {
 		defer term.SetState(0, termState)
 	}
 	flag.Parse()
-
-	for CopyLine() == nil {
-		lines--
-		if lines <= 0 {
-			break
+	if p := flag.Args(); len(p) > 0 {
+		var err error
+		lines, err = strconv.ParseFloat(p[len(p)-1], 64)
+		if err != nil {
+			return
 		}
+	}
+
+	for lines > 0 && CopyLine() {
+		lines--
 	}
 }
